@@ -1,0 +1,8 @@
+doctype html
+head
+  title Hello, world!
+body
+  h2 Error! #{error.status || ''}
+  p= message
+  if error.stack
+    pre= error.stack
