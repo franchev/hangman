@@ -9,6 +9,7 @@ module.exports = {
     request: true,
     sinon: true,
     generateRandomString: true,
+    knex: true,
   },
   rules: {
     'func-names': 'off',

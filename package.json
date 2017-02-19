@@ -8,25 +8,31 @@
   "license": "The Unlicense",
   "scripts": {
     "lint": "eslint src/ test/",
+    "migrate": "knex migrate:latest",
+    "rollback": "knex migrate:rollback",
     "start": "node --require babel-register index.js",
-    "test": "yarn test:spec && yarn test:http",
-    "test:coverage": "nyc --require babel-register --reporter=text --reporter=text-summary ./node_modules/mocha/bin/_mocha --require test/.setup.js test/**/*.js",
-    "test:spec": "mocha --require babel-register --require test/.setup.js test/**/*.spec.js",
-    "test:http": "mocha --require babel-register --require test/.setup.js test/**/*.http.js"
+    "test": "NODE_ENV=test yarn test:spec && yarn test:http",
+    "test:coverage": "NODE_ENV=test nyc --require babel-register --reporter=text --reporter=text-summary ./node_modules/mocha/bin/_mocha --require test/.setup.js test/**/*.js",
+    "test:spec": "NODE_ENV=test mocha --require babel-register --require test/.setup.js test/**/*.spec.js",
+    "test:http": "NODE_ENV=test mocha --require babel-register --require test/.setup.js test/**/*.http.js"
   },
   "dependencies": {
     "babel-core": "^6.22.1",
     "babel-preset-es2015": "^6.22.0",
     "babel-preset-stage-1": "^6.22.0",
     "babel-register": "^6.22.0",
+    "bluebird": "^3.4.7",
     "config": "^1.25.1",
     "express": "^4.14.1",
     "helmet": "^3.4.0",
     "js-yaml": "^3.8.1",
+    "knex": "^0.12.7",
     "log4js": "^1.1.0",
     "morgan": "^1.8.0",
+    "pg": "^6.1.2",
     "pug": "^2.0.0-beta11",
     "rotating-file-stream": "^1.1.7",
+    "sqlite3": "^3.1.8",
     "uuid": "^3.0.1"
   },
   "devDependencies": {

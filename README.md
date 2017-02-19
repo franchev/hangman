@@ -9,6 +9,7 @@ $ yarn
 $ yarn start
 
 # Run tests
+# Tests should be run with `NODE_ENV=test` for test database configuration
 $ yarn test
 $ yarn test:unit
 $ yarn test:http
