@@ -21,5 +21,12 @@ export default function createGamesController({ gameService }) {
           return res.status(200).json(game);
         });
     },
+
+    listGames(req, res) {
+      return gameService.listGames()
+        .then((games) => {
+          res.status(200).json(games);
+        });
+    },
   };
 }

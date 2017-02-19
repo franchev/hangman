@@ -31,4 +31,14 @@ describe('services/gameService', () => {
       return expect(response).to.eventually.be.undefined;
     });
   });
+
+  describe('#listGames', () => {
+    it('returns a resolved Promise with an array of games', () => {
+      const response = gameService.listGames();
+
+      return expect(response).to.eventually.be.fulfilled.then((games) => {
+        expect(games).to.have.length(2);
+      });
+    });
+  });
 });

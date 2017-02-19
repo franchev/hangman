@@ -13,6 +13,20 @@ describe('/api/v1/games', () => {
 
   afterEach(() => knex.migrate.rollback());
 
+  describe('GET /', () => {
+    it('returns a 200 with an array of game objects', () =>
+      requestAgent
+        .get('/api/v1/games/')
+        .accept('json')
+        .then((res) => {
+          expect(res.ok).to.be.ok;
+
+          expect(res.body).to.be.an('array');
+          expect(res.body).to.have.length(2);
+          expect(res.body[0].id).to.be.a('string');
+        }));
+  });
+
   describe('GET /{id}', () => {
     it('returns a 200 with a corresponding game for a valid game ID', () =>
       requestAgent

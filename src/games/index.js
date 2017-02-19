@@ -7,6 +7,7 @@ const controller = createGamesController({ gameService });
 
 const router = Router();
 
+router.get('/', controller.listGames);
 router.get('/:id', controller.getGame);
 
 export default router;
