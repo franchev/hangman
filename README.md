@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/camlegleiter/hangman.svg?branch=master)](https://travis-ci.org/camlegleiter/hangman)
+
 ## Boilerplate Express Application
 
 This is a boilerplate Express application using ES2015 via Babel.
