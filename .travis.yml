@@ -4,7 +4,10 @@ node_js:
   - '6'
   - '7'
 
-script: yarn test
+script: yarn test:coverage
+
+after_script:
+  - yarn coveralls
 
 notifications:
   email: false
