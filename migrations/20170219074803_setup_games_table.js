@@ -3,7 +3,7 @@ exports.up = (knex) => Promise.all([
     t.uuid('id').primary().unique().notNull();
     t.string('wordLength').notNull();
     t.string('lettersGuessed').notNull();
-    t.integer('remainingIncorrectGuesses').notNull();
+    t.integer('remainingGuesses').notNull();
     t.boolean('isGameOver').notNull();
     t.boolean('isWinner').notNull();
     t.string('word').notNull();
