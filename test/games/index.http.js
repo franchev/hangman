@@ -34,7 +34,8 @@ describe('/api/v1/games', () => {
         .accept('json')
         .then((res) => {
           expect(res.ok).to.be.ok;
-          expect(res.type).to.equal('application/json');
+
+          expect(res.body.id).to.equal(gameId);
         }));
 
     it('returns a 404 for a game that does not exist', () =>
@@ -44,7 +45,6 @@ describe('/api/v1/games', () => {
         .then((res) => {
           // expect(res.notFound).to.be.ok;
           expect(res.status).to.equal(404);
-          expect(res.type).to.equal('application/json');
 
           const { statusCode, message } = res.body;
           expect(statusCode).to.equal(404);
