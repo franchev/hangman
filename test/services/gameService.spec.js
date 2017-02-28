@@ -1,4 +1,4 @@
-import createGameService from '../../src/services/gameService';
+import createGameService, { GAME_STATE } from '../../src/services/gameService';
 
 describe('services/gameService', () => {
   const id = '827094e8-e38e-47db-b8da-cf167e16d3be';
@@ -39,6 +39,39 @@ describe('services/gameService', () => {
       return expect(response).to.eventually.be.fulfilled.then((games) => {
         expect(games).to.have.length(2);
       });
+    });
+  });
+
+  describe('#createGame', () => {
+    let word;
+
+    beforeEach(() => {
+      word = generateRandomString('word');
+    });
+
+    it('returns a resolved Promise with a new game given a word', () => {
+      const response = gameService.createGame({ word });
+
+      return expect(response).to.eventually.be.fulfilled.then((game) => {
+        expect(game.word).to.equal(word);
+        expect(game.remainingGuesses).to.equal(6);
+        expect(game.state).to.equal(GAME_STATE.STARTED);
+
+        return knex('games').then((games) => {
+          expect(games).to.have.length(3);
+        });
+      });
+    });
+
+    it('returns a rejected Promise if an unknown error is thrown', () => {
+      const err = new Error('A bad knex!');
+      const badKnex = sinon.stub().withArgs('games').throws(err);
+
+      gameService = createGameService({ knex: badKnex });
+
+      const response = gameService.createGame({ word });
+
+      return expect(response).to.be.rejectedWith(err);
     });
   });
 });

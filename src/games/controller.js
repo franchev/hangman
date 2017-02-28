@@ -1,4 +1,4 @@
-export default function createGamesController({ gameService }) {
+export default function createGamesController({ gameService, wordService }) {
   return {
     getGame(req, res) {
       const { id } = req.params;
@@ -26,6 +26,14 @@ export default function createGamesController({ gameService }) {
       return gameService.listGames()
         .then((games) => {
           res.status(200).json(games);
+        });
+    },
+
+    createGame(req, res) {
+      return wordService.getRandomWord()
+        .then((word) => gameService.createGame({ word }))
+        .then((game) => {
+          res.status(201).json(game);
         });
     },
   };

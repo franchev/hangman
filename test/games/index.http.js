@@ -51,4 +51,16 @@ describe('/api/v1/games', () => {
           expect(message).to.contain(`No game with ID ${randomGameId} exists.`);
         }));
   });
+
+  describe('POST /', () => {
+    it('returns a 201 with a new game', () =>
+      requestAgent
+        .post('/api/v1/games')
+        .accept('json')
+        .then((res) => {
+          expect(res.status).to.equal(201);
+
+          expect(res.body.id).to.be.ok;
+        }));
+  });
 });
