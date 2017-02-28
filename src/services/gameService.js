@@ -1,3 +1,5 @@
+import Promise from 'bluebird';
+
 export const GAME_STATE = {
   STARTED: 'started',
   WON: 'won',
@@ -7,12 +9,13 @@ export const GAME_STATE = {
 export default function createGameService({ knex }) {
   return {
     getGameById({ id }) {
-      return knex('games').where({ id })
-        .then(([game]) => game);
+      return Promise.try(() =>
+        knex('games').where({ id })
+          .then(([game]) => game));
     },
 
     listGames() {
-      return knex('games');
+      return Promise.try(() => knex('games'));
     },
   };
 }
