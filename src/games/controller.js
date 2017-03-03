@@ -36,5 +36,14 @@ export default function createGamesController({ gameService, wordService }) {
           res.status(201).json(game);
         });
     },
+
+    deleteGame(req, res) {
+      const { id } = req.params;
+
+      return gameService.deleteGame({ id })
+        .then(() => {
+          res.status(204).end();
+        });
+    },
   };
 }

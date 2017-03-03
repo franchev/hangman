@@ -10,5 +10,6 @@ const router = Router();
 router.get('/', controller.listGames);
 router.get('/:id', controller.getGame);
 router.post('/', controller.createGame);
+router.delete('/:id', controller.deleteGame);
 
 export default router;

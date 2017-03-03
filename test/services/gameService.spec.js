@@ -2,11 +2,13 @@ import createGameService, { GAME_STATE } from '../../src/services/gameService';
 
 describe('services/gameService', () => {
   const id = '827094e8-e38e-47db-b8da-cf167e16d3be';
-  const randomGameId = generateRandomString('game-id');
 
+  let randomGameId;
   let gameService;
 
   beforeEach(() => {
+    randomGameId = generateRandomString('game-id');
+
     gameService = createGameService({ knex });
 
     return knex.migrate.rollback()
@@ -72,6 +74,20 @@ describe('services/gameService', () => {
       const response = gameService.createGame({ word });
 
       return expect(response).to.be.rejectedWith(err);
+    });
+  });
+
+  describe('#deleteGame', () => {
+    it('returns a resolved Promise if a valid game ID was given', () => {
+      const response = gameService.deleteGame({ id });
+
+      return expect(response).to.eventually.be.fullfiled;
+    });
+
+    it('returns a resolved Promise if deleting with an invalid game ID', () => {
+      const response = gameService.deleteGame({ id: randomGameId });
+
+      return expect(response).to.eventually.be.fulfilled;
     });
   });
 });

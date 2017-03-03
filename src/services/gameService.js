@@ -34,6 +34,12 @@ export default function createGameService({ knex }) {
         .then(() => service.getGameById({ id }));
       });
     },
+
+    deleteGame({ id }) {
+      return Promise.try(() =>
+        knex('games').where({ id }).del()
+          .then(() => {}));
+    },
   };
 
   return service;

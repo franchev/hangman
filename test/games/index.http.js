@@ -1,9 +1,11 @@
 describe('/api/v1/games', () => {
   const gameId = '827094e8-e38e-47db-b8da-cf167e16d3be';
-  const randomGameId = generateRandomString('game-id');
+  let randomGameId;
   let requestAgent;
 
   beforeEach(() => {
+    randomGameId = generateRandomString('game-id');
+
     requestAgent = request(app);
 
     return knex.migrate.rollback()
@@ -27,7 +29,7 @@ describe('/api/v1/games', () => {
         }));
   });
 
-  describe('GET /{id}', () => {
+  describe('GET /:id', () => {
     it('returns a 200 with a corresponding game for a valid game ID', () =>
       requestAgent
         .get(`/api/v1/games/${gameId}`)
@@ -61,6 +63,27 @@ describe('/api/v1/games', () => {
           expect(res.status).to.equal(201);
 
           expect(res.body.id).to.be.ok;
+        }));
+  });
+
+  describe('DELETE /:id', () => {
+    it('returns a 204 to indicate a game was successfully removed', () =>
+      requestAgent
+        .post('/api/v1/games')
+        .accept('json')
+        .then((res) => res.body.id)
+        .then((id) =>
+          requestAgent
+            .delete(`/api/v1/games/${id}`))
+        .then((res) => {
+          expect(res.status).to.equal(204);
+        }));
+
+    it('returns a 204 even if removing a game that does not exist', () =>
+      requestAgent
+        .delete(`/api/v1/games/${randomGameId}`)
+        .then((res) => {
+          expect(res.status).to.equal(204);
         }));
   });
 });
