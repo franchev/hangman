@@ -1,3 +1,8 @@
+const handleError = (req, res) => (err) => {
+  req.log.error(err);
+  res.status(500).end();
+};
+
 export default function createGamesController({ gameService, wordService }) {
   return {
     getGame(req, res) {
@@ -20,10 +25,7 @@ export default function createGamesController({ gameService, wordService }) {
 
           return res.status(200).json(game);
         })
-        .catch((err) => {
-          req.log.error(err);
-          res.status(500).end();
-        });
+        .catch(handleError(req, res));
     },
 
     listGames(req, res) {
@@ -31,10 +33,7 @@ export default function createGamesController({ gameService, wordService }) {
         .then((games) => {
           res.status(200).json(games);
         })
-        .catch((err) => {
-          req.log.error(err);
-          res.status(500).end();
-        });
+        .catch(handleError(req, res));
     },
 
     createGame(req, res) {
@@ -43,10 +42,7 @@ export default function createGamesController({ gameService, wordService }) {
         .then((game) => {
           res.status(201).json(game);
         })
-        .catch((err) => {
-          req.log.error(err);
-          res.status(500).end();
-        });
+        .catch(handleError(req, res));
     },
 
     deleteGame(req, res) {
@@ -56,10 +52,7 @@ export default function createGamesController({ gameService, wordService }) {
         .then(() => {
           res.status(204).end();
         })
-        .catch((err) => {
-          req.log.error(err);
-          res.status(500).end();
-        });
+        .catch(handleError(req, res));
     },
   };
 }
