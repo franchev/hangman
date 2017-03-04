@@ -1,6 +1,7 @@
 import express from 'express';
 import helmet from 'helmet';
 
+import { requestLogger } from './middleware';
 import routes from './routes';
 
 const app = express();
@@ -8,6 +9,7 @@ const app = express();
 app.set('views', './views');
 app.set('view engine', 'pug');
 
+app.use(requestLogger);
 app.use(helmet());
 
 app.use('/', routes);

@@ -8,4 +8,7 @@ module.exports = {
     },
   },
   env: 'test',
+  logger: {
+    level: 'error',
+  },
 };

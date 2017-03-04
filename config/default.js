@@ -8,4 +8,7 @@ module.exports = {
       directory: './seeds',
     },
   },
+  logger: {
+    level: 'info',
+  },
 };
