@@ -42,6 +42,10 @@ export default function createGamesController({ gameService, wordService }) {
         .then((word) => gameService.createGame({ word }))
         .then((game) => {
           res.status(201).json(game);
+        })
+        .catch((err) => {
+          req.log.error(err);
+          res.status(500).end();
         });
     },
 
@@ -51,6 +55,10 @@ export default function createGamesController({ gameService, wordService }) {
       return gameService.deleteGame({ id })
         .then(() => {
           res.status(204).end();
+        })
+        .catch((err) => {
+          req.log.error(err);
+          res.status(500).end();
         });
     },
   };
