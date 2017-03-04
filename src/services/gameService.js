@@ -9,6 +9,8 @@ export const GAME_STATE = {
 
 export default function createGameService({ knex }) {
   const service = {
+    GAME_STATE,
+
     getGameById({ id }) {
       return Promise.try(() =>
         knex('games').where({ id })
@@ -22,14 +24,16 @@ export default function createGameService({ knex }) {
     createGame({ word }) {
       return Promise.try(() => {
         const id = uuid.v4();
+        const wordLength = word.length;
 
         return knex('games').insert({
           id,
           word,
+          wordLength,
           lettersGuessed: '',
+          lettersMatched: Array(wordLength).fill('_').join(''),
           remainingGuesses: 6,
           state: GAME_STATE.STARTED,
-          wordLength: word.length,
         })
         .then(() => service.getGameById({ id }));
       });

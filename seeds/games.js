@@ -11,16 +11,21 @@ exports.games = [
     id: 'e20692e1-8646-4a72-9fa0-dab623ff8c9a',
     word: 'anagram',
   },
-].map((game) => ({
-  id: game.id,
-  word: game.word,
-  wordLength: game.word.length,
-  lettersGuessed: game.lettersGuessed || '',
-  remainingGuesses: game.remainingGuesses || 6,
-  state: game.state || 'started',
-  createdOn: now,
-  updatedOn: now,
-}));
+].map((game) => {
+  const wordLength = game.word.length;
+
+  return {
+    id: game.id,
+    word: game.word,
+    wordLength,
+    lettersGuessed: game.lettersGuessed || '',
+    lettersMatched: Array(wordLength).fill('_').join(''),
+    remainingGuesses: game.remainingGuesses || 6,
+    state: game.state || 'started',
+    createdOn: now,
+    updatedOn: now,
+  };
+});
 
 exports.seed = (knex) => Promise.all([
   // Deletes ALL existing entries

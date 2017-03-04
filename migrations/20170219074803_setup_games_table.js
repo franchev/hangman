@@ -6,6 +6,7 @@ exports.up = (knex) => Promise.all([
     t.uuid('id').primary().unique().notNull();
     t.string('wordLength').notNull();
     t.string('lettersGuessed').notNull();
+    t.string('lettersMatched').notNull();
     t.integer('remainingGuesses').notNull();
     t.enu('state', values(GAME_STATE)).notNull();
     t.string('word').notNull();
