@@ -86,4 +86,17 @@ describe('/api/v1/games', () => {
           expect(res.status).to.equal(204);
         }));
   });
+
+  describe('PUT /:id', () => {
+    it('returns a 400 to indicate the guessed letter has too many characters', () =>
+      requestAgent
+        .put(`/api/v1/games/${gameId}`)
+        .type('application/json')
+        .send({ letter: 'ab' })
+        .accept('json')
+        .then((res) => {
+          expect(res.status).to.equal(400);
+          expect(res.body.message).to.equal('A guess must be a single letter');
+        }));
+  });
 });
