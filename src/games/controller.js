@@ -19,6 +19,10 @@ export default function createGamesController({ gameService, wordService }) {
           }
 
           return res.status(200).json(game);
+        })
+        .catch((err) => {
+          req.log.error(err);
+          res.status(500).end();
         });
     },
 
@@ -26,6 +30,10 @@ export default function createGamesController({ gameService, wordService }) {
       return gameService.listGames()
         .then((games) => {
           res.status(200).json(games);
+        })
+        .catch((err) => {
+          req.log.error(err);
+          res.status(500).end();
         });
     },
 

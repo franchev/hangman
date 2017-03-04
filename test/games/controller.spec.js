@@ -14,9 +14,13 @@ describe('games/controller', () => {
       params: {
         id: randomGameId,
       },
+      log: {
+        error: sinon.spy(),
+      },
     };
     res = {
       json: sinon.spy(),
+      end: sinon.spy(),
     };
 
     controller = createGamesController({ gameService });
@@ -67,6 +71,20 @@ describe('games/controller', () => {
         expect(res.json).to.be.calledOnce.and.deep.calledWith(game);
       });
     });
+
+    it('responds with a 500 if a database error occurs', () => {
+      const error = new Error('error!');
+      gameService.getGameById = sinon.stub().returns(Promise.reject(error));
+      res.status = sinon.stub().withArgs(500).returns(res);
+
+      const response = controller.getGame(req, res);
+
+      return expect(response).to.be.eventually.fulfilled.then(() => {
+        expect(req.log.error).to.be.calledOnce.and.calledWith(error);
+        expect(res.status).to.be.calledOnce;
+        expect(res.end).to.be.calledOnce;
+      });
+    });
   });
 
   describe('#listGames', () => {
@@ -80,6 +98,20 @@ describe('games/controller', () => {
       return expect(response).to.be.eventually.fulfilled.then(() => {
         expect(res.status).to.be.calledOnce;
         expect(res.json).to.be.calledOnce.and.deep.calledWith(games);
+      });
+    });
+
+    it('responds with a 500 if a database error occurs', () => {
+      const error = new Error('error!');
+      gameService.listGames = sinon.stub().returns(Promise.reject(error));
+      res.status = sinon.stub().withArgs(500).returns(res);
+
+      const response = controller.listGames(req, res);
+
+      return expect(response).to.be.eventually.fulfilled.then(() => {
+        expect(req.log.error).to.be.calledOnce.and.calledWith(error);
+        expect(res.status).to.be.calledOnce;
+        expect(res.end).to.be.calledOnce;
       });
     });
   });
