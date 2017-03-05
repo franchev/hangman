@@ -1,4 +1,8 @@
 export default function indexReplace(lettersMatched, word, letter) {
+  if (lettersMatched.length !== word.length) {
+    throw new Error('lettersMatched length is different than word\'s, cannot replace indices');
+  }
+
   if (word.indexOf(letter) === -1) {
     return lettersMatched;
   }

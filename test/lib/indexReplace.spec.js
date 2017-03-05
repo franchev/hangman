@@ -3,8 +3,14 @@ import { indexReplace } from '../../src/lib';
 describe('lib/indexReplace', () => {
   const word = 'apple';
 
+  it('throws if lettersMatched and word are not the same length', () => {
+    expect(() => {
+      indexReplace('foo', word, 'x');
+    }).to.throw(Error);
+  });
+
   it('returns the same lettersMatched string if the letter is not in the word', () => {
-    const lettersMatched = 'foo';
+    const lettersMatched = 'grape';
     const actual = indexReplace(lettersMatched, word, 'x');
 
     expect(actual).to.equal(lettersMatched);
