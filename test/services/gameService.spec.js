@@ -1,4 +1,4 @@
-import createGameService, { GAME_STATE } from '../../src/services/gameService';
+import createGameService, { GAME_STATE, NoSuchGameError } from '../../src/services/gameService';
 
 describe('services/gameService', () => {
   const id = '827094e8-e38e-47db-b8da-cf167e16d3be';
@@ -88,6 +88,27 @@ describe('services/gameService', () => {
       const response = gameService.deleteGame({ id: randomGameId });
 
       return expect(response).to.eventually.be.fulfilled;
+    });
+  });
+
+  describe('#updateGame', () => {
+    it('returns a rejected Promise if updating an invalid game', () => {
+      const response = gameService.updateGame({ id: randomGameId, lettersGuessed: 'a' });
+
+      return expect(response).to.be.rejectedWith(NoSuchGameError);
+    });
+
+    it('returns a resolved Promise if a game is updated successfully', () => {
+      const game = {
+        id,
+        lettersGuessed: 'a',
+      };
+      const response = gameService.updateGame(game);
+
+      return expect(response).to.eventually.be.fulfilled.then(() =>
+        knex('games').where({ id }).then(([actual]) => {
+          expect(actual.lettersGuessed).to.equal(game.lettersGuessed);
+        }));
     });
   });
 });

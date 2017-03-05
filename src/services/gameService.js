@@ -1,4 +1,5 @@
-import Promise from 'bluebird';
+import Promise, { OperationalError } from 'bluebird';
+import { noop } from 'noop';
 import uuid from 'uuid';
 
 export const GAME_STATE = {
@@ -6,6 +7,8 @@ export const GAME_STATE = {
   WON: 'won',
   LOST: 'lost',
 };
+
+export class NoSuchGameError extends OperationalError {}
 
 export default function createGameService({ knex }) {
   const service = {
@@ -42,7 +45,20 @@ export default function createGameService({ knex }) {
     deleteGame({ id }) {
       return Promise.try(() =>
         knex('games').where({ id }).del()
-          .then(() => {}));
+          .then(noop));
+    },
+
+    updateGame({ id, ...game }) {
+      return Promise.try(() => knex.transaction((trx) =>
+        trx.select().from('games').where({ id })
+          .then(([existingGame]) => {
+            if (!existingGame) {
+              throw new NoSuchGameError();
+            }
+          })
+          .then(() => trx.update({ ...game }).into('games').where({ id })
+          .then(noop),
+      )));
     },
   };
 
