@@ -1,4 +1,5 @@
-import Promise, { OperationalError } from 'bluebird';
+import Promise from 'bluebird';
+import HttpError from 'standard-http-error';
 import { noop } from 'noop';
 import uuid from 'uuid';
 
@@ -8,12 +9,8 @@ export const GAME_STATE = {
   LOST: 'lost',
 };
 
-export class NoSuchGameError extends OperationalError {}
-
 export default function createGameService({ knex }) {
   const service = {
-    GAME_STATE,
-
     getGameById({ id }) {
       return Promise.try(() =>
         knex('games').where({ id })
@@ -53,12 +50,11 @@ export default function createGameService({ knex }) {
         trx.select().from('games').where({ id })
           .then(([existingGame]) => {
             if (!existingGame) {
-              throw new NoSuchGameError();
+              throw new HttpError(404);
             }
           })
-          .then(() => trx.update({ ...game }).into('games').where({ id })
-          .then(noop),
-      )));
+          .then(() => trx.update({ ...game }).into('games').where({ id })))
+        .then(noop));
     },
   };
 

@@ -1,4 +1,6 @@
-import createGameService, { GAME_STATE, NoSuchGameError } from '../../src/services/gameService';
+import HttpError from 'standard-http-error';
+
+import createGameService, { GAME_STATE } from '../../src/services/gameService';
 
 describe('services/gameService', () => {
   const id = '827094e8-e38e-47db-b8da-cf167e16d3be';
@@ -95,7 +97,7 @@ describe('services/gameService', () => {
     it('returns a rejected Promise if updating an invalid game', () => {
       const response = gameService.updateGame({ id: randomGameId, lettersGuessed: 'a' });
 
-      return expect(response).to.be.rejectedWith(NoSuchGameError);
+      return expect(response).to.be.rejectedWith(HttpError);
     });
 
     it('returns a resolved Promise if a game is updated successfully', () => {
