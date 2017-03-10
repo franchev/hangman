@@ -2,7 +2,14 @@ import HttpError from 'standard-http-error';
 
 import { GAME_STATE } from '../services/gameService';
 
-const handleError = (req, res) => (err) => {
+const handleHttpError = (req, res) => (err) => {
+  res.status(err.code).json({
+    message: err.message,
+    statusCode: err.code,
+  });
+};
+
+const handleServerError = (req, res) => (err) => {
   req.log.error(err);
   res.status(500).end();
 };
@@ -21,15 +28,13 @@ export default function createGamesController({ indexReplace, gameService, wordS
       return gameService.getGameById({ id })
         .then((game) => {
           if (!game) {
-            return res.status(404).json({
-              message: `No game with ID ${id} exists.`,
-              statusCode: 404,
-            });
+            throw new HttpError(404, `No game with ID ${id} exists.`);
           }
 
           return res.status(200).json(game);
         })
-        .catch(handleError(req, res));
+        .catch(HttpError, handleHttpError(req, res))
+        .catch(handleServerError(req, res));
     },
 
     listGames(req, res) {
@@ -37,7 +42,7 @@ export default function createGamesController({ indexReplace, gameService, wordS
         .then((games) => {
           res.status(200).json(games);
         })
-        .catch(handleError(req, res));
+        .catch(handleServerError(req, res));
     },
 
     createGame(req, res) {
@@ -46,7 +51,7 @@ export default function createGamesController({ indexReplace, gameService, wordS
         .then((game) => {
           res.status(201).json(game);
         })
-        .catch(handleError(req, res));
+        .catch(handleServerError(req, res));
     },
 
     deleteGame(req, res) {
@@ -56,7 +61,7 @@ export default function createGamesController({ indexReplace, gameService, wordS
         .then(() => {
           res.status(204).end();
         })
-        .catch(handleError(req, res));
+        .catch(handleServerError(req, res));
     },
 
     guessLetter(req, res) {
@@ -66,10 +71,7 @@ export default function createGamesController({ indexReplace, gameService, wordS
       return gameService.getGameById({ id })
         .then((game) => {
           if (!game) {
-            return res.status(404).json({
-              message: `No game with ID ${id} exists.`,
-              statusCode: 404,
-            });
+            throw new HttpError(404, `No game with ID ${id} exists.`);
           }
 
           if (game.state !== GAME_STATE.STARTED) {
@@ -98,13 +100,8 @@ export default function createGamesController({ indexReplace, gameService, wordS
           return gameService.updateGame(game)
             .then(() => res.status(200).json(game));
         })
-        .catch(HttpError, (err) => {
-          res.status(err.code).json({
-            message: err.message,
-            statusCode: err.code,
-          });
-        })
-        .catch(handleError(req, res));
+        .catch(HttpError, handleHttpError(req, res))
+        .catch(handleServerError(req, res));
     },
   };
 }
