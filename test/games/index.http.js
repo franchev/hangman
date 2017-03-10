@@ -1,5 +1,10 @@
+import Promise from 'bluebird';
+
+import { GAME_STATE } from '../../src/services/gameService';
+
 describe('/api/v1/games', () => {
   const gameId = '827094e8-e38e-47db-b8da-cf167e16d3be';
+  const word = 'pineapple';
   let randomGameId;
   let requestAgent;
 
@@ -98,5 +103,29 @@ describe('/api/v1/games', () => {
           expect(res.status).to.equal(400);
           expect(res.body.message).to.equal('A guess must be a single letter');
         }));
+
+    it('returns a 200 when guessing letters of a word and when a game is won', () => {
+      function reducer(promise, letter) {
+        return promise.then(() =>
+          requestAgent
+            .put(`/api/v1/games/${gameId}`)
+            .type('application/json')
+            .send({ letter })
+            .then((res) => {
+              expect(res.status).to.equal(200);
+              expect(res.body.lettersGuessed).to.contain(letter);
+              expect(res.body.remainingGuesses).to.equal(6);
+              return res;
+            }));
+      }
+
+      const response = word.split('').reduce(reducer, Promise.resolve());
+
+      return expect(response).to.eventually.be.fulfilled.then((res) => {
+        const game = res.body;
+        expect(game.state).to.equal(GAME_STATE.WON);
+        expect(game.lettersMatched).to.equal(word);
+      });
+    });
   });
 });

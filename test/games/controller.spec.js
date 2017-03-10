@@ -1,8 +1,14 @@
+import Promise from 'bluebird';
+import HttpError from 'standard-http-error';
+
 import createGamesController from '../../src/games/controller';
+import { GAME_STATE } from '../../src/services/gameService';
+import { indexReplace } from '../../src/lib';
 
 describe('games/controller', () => {
   const randomGameId = generateRandomString('game-id');
   const randomWord = generateRandomString('word');
+  const letter = 'a';
 
   let controller;
   let gameService;
@@ -11,11 +17,16 @@ describe('games/controller', () => {
   let res;
 
   beforeEach(() => {
-    gameService = {};
+    gameService = {
+      GAME_STATE,
+    };
     wordService = {
       getRandomWord: sinon.stub().withArgs().returns(Promise.resolve(randomWord)),
     };
     req = {
+      body: {
+        letter,
+      },
       params: {
         id: randomGameId,
       },
@@ -25,10 +36,12 @@ describe('games/controller', () => {
     };
     res = {
       json: sinon.spy(),
+      status: sinon.stub(),
       end: sinon.spy(),
     };
+    res.status.returns(res);
 
-    controller = createGamesController({ gameService, wordService });
+    controller = createGamesController({ indexReplace, gameService, wordService });
   });
 
   describe('#getGame', () => {
@@ -192,6 +205,144 @@ describe('games/controller', () => {
         expect(req.log.error).to.be.calledOnce.and.calledWith(error);
         expect(res.status).to.be.calledOnce;
         expect(res.end).to.be.calledOnce;
+      });
+    });
+  });
+
+  describe('#guessLetter', () => {
+    const word = 'apple';
+    let game;
+
+    beforeEach(() => {
+      game = {
+        word,
+        id: randomGameId,
+        state: GAME_STATE.STARTED,
+        lettersGuessed: '',
+        lettersMatched: '_____',
+        remainingGuesses: 6,
+      };
+
+      gameService.getGameById = sinon.stub().withArgs({
+        id: randomGameId,
+      }).returns(Promise.resolve(game));
+      gameService.updateGame = sinon.stub().withArgs(game).returns(Promise.resolve());
+    });
+
+    it('responds with a 404 if no game exists for a given ID', () => {
+      gameService.getGameById.withArgs({
+        id: randomGameId,
+      }).returns(Promise.resolve(null));
+
+      const response = controller.guessLetter(req, res);
+
+      return expect(response).to.be.eventually.fulfilled.then(() => {
+        expect(res.status).to.be.calledOnce.and.calledWith(404);
+        expect(res.json).to.be.calledOnce.and.deep.calledWith({
+          message: `No game with ID ${randomGameId} exists.`,
+          statusCode: 404,
+        });
+      });
+    });
+
+    it('responds with a 200 and no changes if the game is already over', () => {
+      game.state = GAME_STATE.WON;
+
+      const response = controller.guessLetter(req, res);
+
+      return expect(response).to.be.eventually.fulfilled.then(() => {
+        expect(res.status).to.be.calledOnce.and.calledWith(200);
+        expect(res.json).to.be.calledOnce.and.deep.calledWith(game);
+      });
+    });
+
+    it('responds with a 200 and no changes if a client guesses the same letter repeatedly', () => {
+      game.lettersGuessed = letter;
+
+      const response = controller.guessLetter(req, res);
+
+      return expect(response).to.be.eventually.fulfilled.then(() => {
+        expect(res.status).to.be.calledOnce.and.calledWith(200);
+        expect(res.json).to.be.calledOnce.and.deep.calledWith(game);
+      });
+    });
+
+    it('responds with a 404 if attempting to update a game that does not exist', () => {
+      const message = `No game with ID ${randomGameId} exists.`;
+      gameService.updateGame.returns(Promise.reject(new HttpError(404, message)));
+
+      const response = controller.guessLetter(req, res);
+
+      return expect(response).to.be.eventually.fulfilled.then(() => {
+        expect(res.status).to.be.calledOnce.and.calledWith(404);
+        expect(res.json).to.be.calledOnce.and.deep.calledWith({
+          message,
+          statusCode: 404,
+        });
+      });
+    });
+
+    it('responds with a 200 if a client guesses wrong and still has remainingGuesses', () => {
+      req.body.letter = 'x';
+
+      const response = controller.guessLetter(req, res);
+
+      return expect(response).to.be.eventually.fulfilled.then(() => {
+        expect(res.status).to.be.calledOnce.and.calledWith(200);
+        expect(res.json).to.be.calledOnce.and.calledWith(game);
+
+        expect(game.remainingGuesses).to.equal(5);
+        expect(game.lettersGuessed).to.equal(req.body.letter);
+        expect(game.lettersMatched).to.equal('_____');
+        expect(game.state).to.equal(GAME_STATE.STARTED);
+      });
+    });
+
+    it('responds with a 200 if a client guesses wrong and the game is over', () => {
+      req.body.letter = 'x';
+      game.remainingGuesses = 1;
+
+      const response = controller.guessLetter(req, res);
+
+      return expect(response).to.be.eventually.fulfilled.then(() => {
+        expect(res.status).to.be.calledOnce.and.calledWith(200);
+        expect(res.json).to.be.calledOnce.and.calledWith(game);
+
+        expect(game.remainingGuesses).to.equal(0);
+        expect(game.lettersGuessed).to.equal(req.body.letter);
+        expect(game.lettersMatched).to.equal('_____');
+        expect(game.state).to.equal(GAME_STATE.LOST);
+      });
+    });
+
+    it('responds with a 200 if a client guesses correctly and still has guesses to make', () => {
+      const response = controller.guessLetter(req, res);
+
+      return expect(response).to.be.eventually.fulfilled.then(() => {
+        expect(res.status).to.be.calledOnce.and.calledWith(200);
+        expect(res.json).to.be.calledOnce.and.calledWith(game);
+
+        expect(game.remainingGuesses).to.equal(6);
+        expect(game.lettersGuessed).to.equal(req.body.letter);
+        expect(game.lettersMatched).to.equal('a____');
+        expect(game.state).to.equal(GAME_STATE.STARTED);
+      });
+    });
+
+    it('responds with a 200 if a client guesses correctly and wins the game', () => {
+      game.lettersGuessed = 'ple';
+      game.lettersMatched = '_pple';
+
+      const response = controller.guessLetter(req, res);
+
+      return expect(response).to.be.eventually.fulfilled.then(() => {
+        expect(res.status).to.be.calledOnce.and.calledWith(200);
+        expect(res.json).to.be.calledOnce.and.calledWith(game);
+
+        expect(game.remainingGuesses).to.equal(6);
+        expect(game.lettersGuessed).to.equal('plea');
+        expect(game.lettersMatched).to.equal(word);
+        expect(game.state).to.equal(GAME_STATE.WON);
       });
     });
   });
