@@ -173,7 +173,7 @@ describe('games/controller', () => {
       }).returns(Promise.resolve());
       res.status = sinon.stub().withArgs(204).returns(res);
 
-      const response = controller.createGame(req, res);
+      const response = controller.deleteGame(req, res);
 
       return expect(response).to.be.eventually.fulfilled.then(() => {
         expect(res.status).to.be.calledOnce;
