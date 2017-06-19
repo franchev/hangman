@@ -11,31 +11,31 @@ The overall goal is to create an environment where a developer can push their ch
 For both setups, we will use the same Github repository and jenkins server
 
 ## Setup github webhook to trigger jenkins on push
--- In github, in your repository, click settings -> webhooks
--- Enter a payload url ( for example: https://elasticIp/github-webhook/)
--- Disable ssl verification
--- Click update webhook
+- In github, in your repository, click settings -> webhooks
+- Enter a payload url ( for example: https://elasticIp/github-webhook/)
+- Disable ssl verification
+- Click update webhook
 
 
-### Since both configuration will use the same jenkins01 node: Please follow these steps to configure
+## Since both configuration will use the same jenkins01 node: Please follow these steps to configure
 - Create an ec2 instance in AWS: aws provide some simple instruction on how to do create an ec2 instance here: http://docs.aws.amazon.com/efs/latest/ug/gs-step-one-create-ec2-resources.html.
 - In the security group open port 443 for everywhere.
 - Also open port 22 to my IP address in order to ssh to this server for configuration:
 - SSH to the server and install and setup jenkins by following this guide: https://www.digitalocean.com/community/tutorials/how-to-install-jenkins-on-ubuntu-16-04
-- Once jenkins has been installed, create jenkins job that will trigger the changes as part of the deployment process
--- In jenkins create a freestyle project
--- Under Source Code Management add this repository and github credentials
--- specific a branch to use: branch name: singleNode*/
--- Under build trigger select: GitHub hook trigger for GITScm polling
--- under build select add build steps, and select execute shell
--- Call this small bash script which currently exist on the singlenode01
+### Once jenkins has been installed, create jenkins job that will trigger the changes as part of the deployment process
+- In jenkins create a freestyle project
+- Under Source Code Management add this repository and github credentials
+- specific a branch to use: branch name: singleNode*/
+- Under build trigger select: GitHub hook trigger for GITScm polling
+- under build select add build steps, and select execute shell
+- Call this small bash script which currently exist on the singlenode01
 ```bash
 ssh singlenode01 /bin/bash /workspace/reloadHangman.sh
 ```
 
-- Create self-signed certificate by following this guide: https://www.digitalocean.com/community/tutorials/how-to-create-a-self-signed-ssl-certificate-for-nginx-in-ubuntu-16-04
+## Create self-signed certificate by following this guide: https://www.digitalocean.com/community/tutorials/how-to-create-a-self-signed-ssl-certificate-for-nginx-in-ubuntu-16-04
 
-- Install and configure nginx to access jenkins on port 443
+## Install and configure nginx to access jenkins on port 443
 ```bash
 # apt-get install nginx
 # rm -rf /etc/nginx/sites-available/default
@@ -55,11 +55,11 @@ server {
 ```
 
 ### Single Node configuration & installation
-#### Requirements
+### Requirements
 - AWS Account
 - An Ec2 Instance with public facing IP address (using Elastic IP) for the application
 
-#### Installation steps
+### Installation steps
 - Create an ec2 instance in AWS: aws provide some simple instruction on how to do create an ec2 instance here: http://docs.aws.amazon.com/efs/latest/ug/gs-step-one-create-ec2-resources.html
 - In the security group created during the ec2 instance creation, open these ports:
   TCP port 80 -> provide specific ports
