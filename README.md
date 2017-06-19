@@ -22,8 +22,8 @@ For both setups, we will use the same Github repository and jenkins server
 - In the security group open port 443 for everywhere.
 - Also open port 22 to my IP address in order to ssh to this server for configuration:
 - SSH to the server and install and setup jenkins by following this guide: https://www.digitalocean.com/community/tutorials/how-to-install-jenkins-on-ubuntu-16-04
-### Once jenkins has been installed, create jenkins job that will trigger the changes as part of the deployment process
-- In jenkins create a freestyle project
+### Once jenkins has been installed, create jenkins job that will trigger the changes as part of the deployment process for single node configuration
+- In jenkins create a freestyle project (single-node-hangman)
 - Under Source Code Management add this repository and github credentials
 - specific a branch to use: branch name: singleNode*/
 - Under build trigger select: GitHub hook trigger for GITScm polling
@@ -31,6 +31,60 @@ For both setups, we will use the same Github repository and jenkins server
 - Call this small bash script which currently exist on the singlenode01
 ```bash
 ssh singlenode01 /bin/bash /workspace/reloadHangman.sh
+```
+### Create jenkins job that will trigger the changes as part of the deployment process for swarm cluster
+- In jenkins create a freestyle project (swarm-cluster-hangman)
+- Under Source Code Management add this repository and github credentials
+- specific a branch to use: branch name: clusterNode*/
+- Under build trigger select: GitHub hook trigger for GITScm polling
+- under build select add build steps, and select execute shell
+- Add this script which will reload the jenkins image, and docker container in the cluster
+```bash
+#!/bin/bash
+
+HANGMANTOPDIR="$JENKINS_HOME"
+HANGMANDIR="$HANGMANTOPDIR/hangman"
+DOCKERFILE="$HANGMANTOPDIR/Dockerfile"
+SERVICE="docker"
+
+if [ ! -d "$HANGMANDIR" ]; then
+  git -C $HANGMANTOPDIR clone git@github.com:franchev/hangman.git
+else
+  cd $HANGMANDIR
+  git pull git@github.com:franchev/hangman.git 
+fi
+
+if [ ! -f "$DOCKERFILE" ]; then
+cat <<EOF > $DOCKERFILE
+FROM node:6.11.0
+MAINTAINER frany
+
+RUN mkdir -p /code
+WORKDIR /code
+ADD hangman /code
+RUN npm install -g -s --no-progress yarn && \
+    yarn && \
+    yarn cache clean
+CMD [ "npm", "start" ]
+EXPOSE 3000
+
+EOF
+fi
+
+# making sure that docker service is running
+if (( $(ps -ef | grep -v grep | grep $SERVICE | wc -l) > 0 ))
+then
+echo "$SERVICE is running, proceeding!!!"
+else
+service $SERVICE start
+fi
+
+# rebuild image
+sudo docker -H :4000 build -t hangman_image:latest --pull=true --file=$DOCKERFILE $JENKINS_HOME
+
+# let's remove the old container and use the new image
+sudo docker -H :4000 stop hangman && sudo docker -H :4000 rm hangman
+docker -H :4000 run -d -p 3000:3000 -e reschedule:on-node-failure --name=hangman hangman /bin/sh -c 'yarn && yarn start'
 ```
 
 ## Create self-signed certificate by following this guide: https://www.digitalocean.com/community/tutorials/how-to-create-a-self-signed-ssl-certificate-for-nginx-in-ubuntu-16-04
