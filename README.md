@@ -103,7 +103,7 @@ server {
 # netstat -tupln | grep 3000
 ```
 - Create small script that will reload the application (this will be used by jenkins)
-bash```
+```bash
 #!/bin/bash
 HANGMANDIR="$JENKINS_HOME/hangman"
 if [ ! -d "$HANGMANDIR" ]; then
