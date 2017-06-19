@@ -114,16 +114,20 @@ server {
 - Create small script that will reload the application (this will be used by jenkins)
 ```bash
 #!/bin/bash
+#!/bin/bash
 WORKLOADDIR="/workload"
 HANGMANDIR="$WORKLOADDIR/hangman"
 
 if [ ! -d "$WORKLOADDIR" ]; then
+  echo "making $WORKLOADDIR"
   mkdir -p $WORKLOADDIR && cd $WORKLOADDIR
 fi
 
 if [ ! -d "$HANGMANDIR" ]; then
-  git -C $WORKLOADDIR clone git@github.com:franchev/hangman.git
+  echo "I am cloning hangman"
+  git -C $WORKLOADDIR clone git@github.com:franchev/hangman.git -b singleNode
 else
+  echo "pulling hangman repository"
   cd $HANGMANDIR
   git pull git@github.com:franchev/hangman.git
 fi
