@@ -21,70 +21,47 @@ For both setups, we will use the same Github repository and jenkins server
 - Create an ec2 instance in AWS: aws provide some simple instruction on how to do create an ec2 instance here: http://docs.aws.amazon.com/efs/latest/ug/gs-step-one-create-ec2-resources.html.
 - In the security group open port 443 for everywhere.
 - Also open port 22 to my IP address in order to ssh to this server for configuration:
+- Create a second security group for internal access only between jenkin01 and other nodes.
 - SSH to the server and install and setup jenkins by following this guide: https://www.digitalocean.com/community/tutorials/how-to-install-jenkins-on-ubuntu-16-04
+- Edit /etc/hosts and add entries for the different nodes in each environment IP address
 ### Once jenkins has been installed, create jenkins job that will trigger the changes as part of the deployment process for single node configuration
-- In jenkins create a freestyle project (single-node-hangman)
+- In jenkins create a freestyle project (hangman-single-node)
 - Under Source Code Management add this repository and github credentials
 - specific a branch to use: branch name: singleNode*/
 - Under build trigger select: GitHub hook trigger for GITScm polling
 - under build select add build steps, and select execute shell
 - Call this small bash script which currently exist on the singlenode01
 ```bash
-ssh singlenode01 /bin/bash /workspace/reloadHangman.sh
+# Check if we can ping the node otherwise exit
+ping -q -c1 singlenode01 > /dev/null
+if [ $? -eq 0 ]
+then
+	ssh singlenode01 /bin/bash /workload/reload.sh
+else
+  exit 1
+fi
 ```
 ### Create jenkins job that will trigger the changes as part of the deployment process for swarm cluster
-- In jenkins create a freestyle project (swarm-cluster-hangman)
+- In jenkins create a freestyle project (hangman-swarm-cluster)
 - Under Source Code Management add this repository and github credentials
 - specific a branch to use: branch name: clusterNode*/
 - Under build trigger select: GitHub hook trigger for GITScm polling
 - under build select add build steps, and select execute shell
 - Add this script which will reload the jenkins image, and docker container in the cluster
 ```bash
-#!/bin/bash
-
-HANGMANTOPDIR="$JENKINS_HOME"
-HANGMANDIR="$HANGMANTOPDIR/hangman"
-DOCKERFILE="$HANGMANTOPDIR/Dockerfile"
-SERVICE="docker"
-
-if [ ! -d "$HANGMANDIR" ]; then
-  git -C $HANGMANTOPDIR clone git@github.com:franchev/hangman.git
-else
-  cd $HANGMANDIR
-  git pull git@github.com:franchev/hangman.git 
-fi
-
-if [ ! -f "$DOCKERFILE" ]; then
-cat <<EOF > $DOCKERFILE
-FROM node:6.11.0
-MAINTAINER frany
-
-RUN mkdir -p /code
-WORKDIR /code
-ADD hangman /code
-RUN npm install -g -s --no-progress yarn && \
-    yarn && \
-    yarn cache clean
-CMD [ "npm", "start" ]
-EXPOSE 3000
-
-EOF
-fi
-
-# making sure that docker service is running
-if (( $(ps -ef | grep -v grep | grep $SERVICE | wc -l) > 0 ))
+# Check if we can ping the node otherwise exit
+ping -q -c1 manager0 > /dev/null 
+if [ $? -eq 0 ]
 then
-echo "$SERVICE is running, proceeding!!!"
+	ssh manager0 /bin/bash /workload/reload.sh
 else
-service $SERVICE start
+  ping -q -c1 manager1 > /dev/null
+  if [ $? -eq 0 ]
+  then
+    ssh manager0 /bin/bash /workload/reload.sh
+  else
+    exit 1
 fi
-
-# rebuild image
-sudo docker -H :4000 build -t hangman_image:latest --pull=true --file=$DOCKERFILE $JENKINS_HOME
-
-# let's remove the old container and use the new image
-sudo docker -H :4000 stop hangman && sudo docker -H :4000 rm hangman
-docker -H :4000 run -d -p 3000:3000 -e reschedule:on-node-failure --name=hangman hangman /bin/sh -c 'yarn && yarn start'
 ```
 
 ## Create self-signed certificate by following this guide: https://www.digitalocean.com/community/tutorials/how-to-create-a-self-signed-ssl-certificate-for-nginx-in-ubuntu-16-04
@@ -149,7 +126,7 @@ server {
 
 - Clone repository & start application (and verify that the application has started on port 3000)
 ```bash
-# mkdir /workspace && cd /workspace
+# mkdir /workload && cd /workload
 # git clone https://github.com/franchev/hangman.git
 # cd hangman
 # yarn
@@ -158,6 +135,8 @@ server {
 ```
 - Create small script that will reload the application (this will be used by jenkins)
 ```bash
+# cd /workload
+# vi reload.sh
 #!/bin/bash
 HANGMANDIR="$JENKINS_HOME/hangman"
 if [ ! -d "$HANGMANDIR" ]; then
@@ -202,4 +181,54 @@ server {
         proxy_pass         http://127.0.0.1:3000;
     }
 }
+```
+- on the manager nodes add small script that jenkins will call the reload the container
+- mkdir /workload && cd /workload
+- vi reload.sh
+```bash
+#!/bin/bash
+
+HANGMANTOPDIR="$JENKINS_HOME"
+HANGMANDIR="$HANGMANTOPDIR/hangman"
+DOCKERFILE="$HANGMANTOPDIR/Dockerfile"
+SERVICE="docker"
+
+if [ ! -d "$HANGMANDIR" ]; then
+  git -C $HANGMANTOPDIR clone git@github.com:franchev/hangman.git
+else
+  cd $HANGMANDIR
+  git pull git@github.com:franchev/hangman.git 
+fi
+
+if [ ! -f "$DOCKERFILE" ]; then
+cat <<EOF > $DOCKERFILE
+FROM node:6.11.0
+MAINTAINER frany
+
+RUN mkdir -p /code
+WORKDIR /code
+ADD hangman /code
+RUN npm install -g -s --no-progress yarn && \
+    yarn && \
+    yarn cache clean
+CMD [ "npm", "start" ]
+EXPOSE 3000
+
+EOF
+fi
+
+# making sure that docker service is running
+if (( $(ps -ef | grep -v grep | grep $SERVICE | wc -l) > 0 ))
+then
+echo "$SERVICE is running, proceeding!!!"
+else
+service $SERVICE start
+fi
+
+# rebuild image
+sudo docker -H :4000 build -t hangman_image:latest --pull=true --file=$DOCKERFILE $JENKINS_HOME
+
+# let's remove the old container and use the new image
+sudo docker -H :4000 stop hangman && sudo docker -H :4000 rm hangman
+docker -H :4000 run -d -p 3000:3000 -e reschedule:on-node-failure --name=hangman hangman /bin/sh -c 'yarn && yarn start'
 ```
