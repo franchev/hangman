@@ -24,6 +24,7 @@ The overall goal is to create an environment where a developer can push their ch
 - Create a second security group for internal access only between jenkin01 and other nodes.
 - SSH to the server and install and setup jenkins by following this guide: https://www.digitalocean.com/community/tutorials/how-to-install-jenkins-on-ubuntu-16-04
 - Edit /etc/hosts and add entries for the different nodes in each environment IP address
+
 ### Once jenkins has been installed, create jenkins job that will trigger the changes as part of the deployment process for single node configuration
 - In jenkins create a freestyle project (hangman-single-node)
 - Under Source Code Management add this repository and github credentials
@@ -44,7 +45,7 @@ fi
 
 ### Create self-signed certificate by following this guide: https://www.digitalocean.com/community/tutorials/how-to-create-a-self-signed-ssl-certificate-for-nginx-in-ubuntu-16-04
 
-## Install and configure nginx to access jenkins on port 443
+### Install and configure nginx to access jenkins on port 443
 ```bash
 # apt-get install nginx
 # rm -rf /etc/nginx/sites-available/default
@@ -63,7 +64,7 @@ server {
 }
 ```
 
-### Single Node configuration & installation
+## Single Node configuration & installation
 ### Requirements
 - AWS Account
 - An Ec2 Instance with public facing IP address (using Elastic IP) for the application
@@ -77,7 +78,27 @@ server {
 - Once access has been granted connect to the EC2 instance from a terminal and install these services:
 nginx
 git
-commands:
+nvm
+nodejs 6
+yarn
+
+- installing nvm, nodejs6
+```bash
+# wget -qO- https://raw.githubusercontent.com/creationix/nvm/v0.33.2/install.sh | bash
+# source ~/.profile
+# nvm install v6.11.0
+# n=$(which node);n=${n%/bin/node}; chmod -R 755 $n/bin/*; sudo cp -r $n/{bin,lib,share} /usr/local   -> this is so that nodejs can be available to all users other than root
+```
+
+- installing yarn
+```bash
+# curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
+# echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+# apt-get update
+# apt-get install -y yarn
+```
+
+- installing git & nginx
 ```bash
 # ssh -i "francloud.pem" ubuntu@elasticIP
 # sudo su 
@@ -105,7 +126,7 @@ server {
 - Clone repository & start application (and verify that the application has started on port 3000)
 ```bash
 # mkdir /workload && cd /workload
-# git clone https://github.com/franchev/hangman.git
+# git clone https://github.com/franchev/hangman.git -b singleNode
 # cd hangman
 # yarn
 # yarn start &
@@ -129,7 +150,7 @@ if [ ! -d "$HANGMANDIR" ]; then
 else
   echo "pulling hangman repository"
   cd $HANGMANDIR
-  git pull git@github.com:franchev/hangman.git
+  git pull origin singleNode
 fi
 
 if lsof -Pi :3000 -sTCP:LISTEN -t >/dev/null ; then
