@@ -123,3 +123,29 @@ yarn start
 ```
 
 - Test by making a small change in the application and load the public facing IP to see if this works. 
+
+## Docker Swarm cluster configuration & installation
+### Requirements
+- AWS Account
+- Multiple ec2 instances ( manager0, manager1, node0, node1, consul0)
+- a Load balancer between node0 & node1 ec2 instances
+
+### Installation steps
+- Follow this guide to setup the docker swarm cluster: http://docs.master.dockerproject.org/swarm/install-manual/
+- install and configure nginx on both node0 and node1
+- Install and configure nginx to access the hangman application on port 80
+```bash
+# apt-get install nginx
+# rm -rf /etc/nginx/sites-available/default
+# rm -rf /etc/nginx/sites-enabled/default
+# vi /etc/nginx/sites-enabled/hangman.conf
+server {
+    listen 80;
+    server_name your-domain-name.com;
+    location / {
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   Host      $http_host;
+        proxy_pass         http://127.0.0.1:3000;
+    }
+}
+```
