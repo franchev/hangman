@@ -14,8 +14,8 @@ export default {
       freemem,
       freemempercent,
       instanceId,
-      //totalmem,
-      //usedmem,
+      totalmem,
+      usedmem,
 
       loadavg: os.loadavg(),
       uptime: os.uptime(),
