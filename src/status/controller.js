@@ -13,9 +13,9 @@ export default {
     return res.json({
       freemem,
       freemempercent,
-      instanceId,
-      totalmem,
-      usedmem,
+      //instanceId,
+      //totalmem,
+      //usedmem,
 
       loadavg: os.loadavg(),
       uptime: os.uptime(),
